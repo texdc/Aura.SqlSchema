@@ -103,14 +103,30 @@ class MigratorTest extends \PHPUnit_Framework_TestCase
     {
         $this->migrator->up(3);
         $this->migrator->up(1);
-        var_export($this->output);
+        $expect = array(
+            'Migrating up from 0 to 3.',
+            'Migrated up to 1.',
+            'Migrated up to 2.',
+            'Migrated up to 3.',
+            'Migration up from 0 to 3 committed!',
+            'Currently at version 3, so cannot migrate up to version 1.'
+        );
+
+        $this->assertSame($expect, $this->output);
     }
 
     public function testDownWhenAlreadyPast()
     {
         $this->migrator->up(1);
         $this->migrator->down(3);
-        var_export($this->output);
+        $expect = array (
+            'Migrating up from 0 to 1.',
+            'Migrated up to 1.',
+            'Migration up from 0 to 1 committed!',
+            'Cannot migrate down to version 3 when already at or below it (1).'
+        );
+
+        $this->assertSame($expect, $this->output);
     }
 
     public function testRollbackOnException()
@@ -122,7 +138,10 @@ class MigratorTest extends \PHPUnit_Framework_TestCase
             'Migrated up to 2.',
             'Migrated up to 3.',
             'Migration up from 0 to 4 failed.',
-            'Rolled back to version 0.',
+            'Migration 4 not found.',
+            'Rolled back to version 0.'
         );
+
+        $this->assertSame($expect, $this->output);
     }
 }

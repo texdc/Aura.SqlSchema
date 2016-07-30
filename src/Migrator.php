@@ -74,7 +74,7 @@ class Migrator
         } catch (Exception $e) {
             $this->rollBack();
             $this->output("Migration {$direction} from {$from} to {$to} failed.");
-            $this->output($e->__toString());
+            $this->output($e->getMessage());
             $this->output("Rolled back to version {$from}.");
             return 1;
         }

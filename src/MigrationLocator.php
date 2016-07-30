@@ -1,8 +1,6 @@
 <?php
 namespace Aura\SqlSchema;
 
-use Exception;
-
 class MigrationLocator
 {
     protected $factories = array();
