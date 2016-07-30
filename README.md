@@ -43,7 +43,6 @@ Instantiate a driver-specific schema object with a matching
 [PDO](http://php.net/PDO) instance:
 
 ```php
-<?php
 use Aura\SqlSchema\ColumnFactory;
 use Aura\SqlSchema\MysqlSchema; // for MySQL
 use Aura\SqlSchema\PgsqlSchema; // for PostgreSQL
@@ -59,7 +58,6 @@ $column_factory = new ColumnFactory();
 
 // the schema discovery object
 $schema = new MysqlSchema($pdo, $column_factory);
-?>
 ```
 
 ### Retrieving Schema Information
@@ -67,18 +65,15 @@ $schema = new MysqlSchema($pdo, $column_factory);
 To get a list of tables in the database, issue `fetchTableList()`:
 
 ```php
-<?php
 $tables = $schema->fetchTableList();
 foreach ($tables as $table) {
     echo $table . PHP_EOL;
 }
-?>
 ```
 
 To get information about the columns in a table, issue `fetchTableCols()`:
 
 ```php
-<?php
 $cols = $schema->fetchTableCols('table_name');
 foreach ($cols as $name => $col) {
     echo "Column $name is of type "
@@ -87,7 +82,6 @@ foreach ($cols as $name => $col) {
        . $col->size
        . PHP_EOL;
 }
-?>
 ```
 
 Each column description is a `Column` object with the following properties:
@@ -110,3 +104,79 @@ Each column description is a `Column` object with the following properties:
 
 - `primary`: (bool) Is the column part of the primary key?
 
+## Migrations
+
+### Versions
+
+Migration versions should extend `Aura\SqlSchema\AbstractMigration` which expects a
+[PDO](http://php.net/PDO) instance as a constructor argument.
+
+```php
+<?php
+namespace My\Project\Migration;
+
+use Aura\SqlSchema\AbstractMigration;
+
+class V001 extends AbstractMigration
+{
+    public function up()
+    {
+        $this->pdo->exec("CREATE TABLE test (name VARCHAR(50))");
+    }
+
+    public function down()
+    {
+        $this->pdo->exec("DROP TABLE test");
+    }
+}
+```
+
+### Tracking Versions
+
+Migration versions will be tracked in a `schema_migration` table.
+
+```php
+// initialize the migration table (if necessary)
+$pdo->exec('CREATE TABLE schema_migration (version INT)');
+$pdo->exec('INSERT INTO schema_migration (version) VALUES (0)');
+```
+
+### Running Migrations
+
+Migrations can be run with a simple script.  The [PDO](http://php.net/PDO) instance
+must be configured to use `PDO::ERRMODE_EXCEPTION`.  A `Aura\SqlSchema\Migrator`
+takes the `PDO` instance, an `Aura\SqlSchema\MigrationLocator` with a list of version
+factories, and an output `callable`.
+
+```bash
+#!/usr/local/bin/php
+<?php
+
+namespace My\Project\Migration;
+
+require 'path/to/Aura.SqlSchema/autoload.php';
+
+use Aura\SqlSchema\Migrator;
+use Aura\SqlSchema\MigrationLocator;
+use PDO;
+
+// a PDO connection
+$pdo = new PDO(...);
+// migrations rely on exceptions for error handling
+$pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+
+// build a list of versions
+$factories = array(
+    function () use ($pdo) { return new V001($pdo); },
+    function () use ($pdo) { return new V002($pdo); },
+    function () use ($pdo) { return new V003($pdo); },
+);
+
+$migration_locator = new MigrationLocator($factories);
+$output_callable = function ($message) {
+    print " - " . $message . PHP_EOL;
+};
+
+$migrator = new Migrator($pdo, $migration_locator, $output_callable);
+print $migrator->up();
+```
