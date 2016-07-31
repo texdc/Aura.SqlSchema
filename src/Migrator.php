@@ -1,20 +1,88 @@
 <?php
+/**
+ *
+ * This file is part of Aura for PHP.
+ *
+ * @package Aura.SqlSchema
+ *
+ * @license http://opensource.org/licenses/bsd-license.php BSD
+ *
+ */
 namespace Aura\SqlSchema;
 
 use PDO;
 
+/**
+ *
+ * Migrates schema versions.
+ *
+ * @package Aura.SqlSchema
+ *
+ */
 class Migrator
 {
+    /**
+     *
+     * A Pdo connection.
+     *
+     * @var PDO
+     *
+     */
     protected $pdo;
 
+    /**
+     *
+     * A MigrationLocator for loading migration versions.
+     *
+     * @var MigrationLocator
+     *
+     */
     protected $migration_locator;
 
+    /**
+     *
+     * A callable for rendering messages.
+     *
+     * @var callable
+     *
+     */
     protected $output_callable;
 
+    /**
+     *
+     * The table name for storing migrations.
+     *
+     * @var string
+     *
+     */
     protected $table;
 
+    /**
+     *
+     * The column name to hold the migration version.
+     *
+     * @var string
+     *
+     */
     protected $col;
 
+    /**
+     *
+     * Constructor.
+     *
+     * @param PDO $pdo A database connection.
+     *
+     * @param MigrationLocator $migration_locator A migration version locator.
+     *
+     * @param callable $output_callable A message handling callable.
+     *
+     * @param string $table A database table name.
+     *
+     * @param string $col A database column name.
+     *
+     * @throws Exception When the PDO does not use ERRMODE_EXCEPTION.
+     *
+     */
     public function __construct(
         PDO $pdo,
         MigrationLocator $migration_locator,
@@ -35,6 +103,16 @@ class Migrator
         $this->col = $col;
     }
 
+    /**
+     *
+     * Performs an 'up' migration.
+     *
+     * @param int|null $to The target version number; increments the current version
+     * by one when empty.
+     *
+     * @return int 1 on success, 0 on failure.
+     *
+     */
     public function up($to = null)
     {
         $from = $this->fetchVersion();
@@ -47,6 +125,16 @@ class Migrator
         return $this->applyMigrations('up', $from, $to);
     }
 
+    /**
+     *
+     * Performs a 'down' migration.
+     *
+     * @param int|null $to The target version number; decrements the current version
+     * by one when empty.
+     *
+     * @return int 1 on success, 0 on failure.
+     *
+     */
     public function down($to = null)
     {
         $from = $this->fetchVersion();
@@ -87,7 +175,7 @@ class Migrator
         }
     }
 
-    public function applyMigrationsDown($from, $to)
+    protected function applyMigrationsDown($from, $to)
     {
         for ($version = $from; $version > $to; $version -= 1) {
             $this->applyMigration('down', 'from', $version);
