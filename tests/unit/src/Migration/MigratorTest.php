@@ -1,5 +1,5 @@
 <?php
-namespace Aura\SqlSchema;
+namespace Aura\SqlSchema\Migration;
 
 use PDO;
 
@@ -20,9 +20,9 @@ class MigratorTest extends \PHPUnit_Framework_TestCase
         $pdo->exec('INSERT INTO schema_migration (version) VALUES (0)');
 
         $factories = array(
-            function () use ($pdo) { return new Migration\V001($pdo); },
-            function () use ($pdo) { return new Migration\V002($pdo); },
-            function () use ($pdo) { return new Migration\V003($pdo); },
+            function () use ($pdo) { return new Version\V001($pdo); },
+            function () use ($pdo) { return new Version\V002($pdo); },
+            function () use ($pdo) { return new Version\V003($pdo); },
         );
 
         $migration_locator = new MigrationLocator($factories);
@@ -36,10 +36,39 @@ class MigratorTest extends \PHPUnit_Framework_TestCase
         $this->output[] = $message;
     }
 
+    public function testMigrateWhenNull()
+    {
+        $this->migrator->migrate();
+        $expect = array (
+            'Migrating up from 0 to 3.',
+            'Migrated up to 1.',
+            'Migrated up to 2.',
+            'Migrated up to 3.',
+            'Migration up from 0 to 3 committed!',
+        );
+
+        $this->assertSame($expect, $this->output);
+    }
+
+    public function testMigrateWhenEqual()
+    {
+        $this->migrator->migrate(2);
+        $this->migrator->migrate(2);
+        $expect = array (
+            'Migrating up from 0 to 2.',
+            'Migrated up to 1.',
+            'Migrated up to 2.',
+            'Migration up from 0 to 2 committed!',
+            'Already at version 2, skipping migration.',
+        );
+
+        $this->assertSame($expect, $this->output);
+    }
+
     public function testUpAndDown()
     {
-        $this->migrator->up(3);
-        $this->migrator->down(0);
+        $this->migrator->migrate(3);
+        $this->migrator->migrate(0);
         $expect = array (
             'Migrating up from 0 to 3.',
             'Migrated up to 1.',
@@ -95,13 +124,13 @@ class MigratorTest extends \PHPUnit_Framework_TestCase
         $migration_locator = new MigrationLocator();
         $output_callable = array($this, 'captureOutput');
 
-        $this->setExpectedException('Exception', "PDO must use ERRMODE_EXCEPTION for migrations.");
+        $this->expectException('Exception', "PDO must use ERRMODE_EXCEPTION for migrations.");
         $this->migrator = new Migrator($pdo, $migration_locator, $output_callable);
     }
 
     public function testUpWhenAlreadyPast()
     {
-        $this->migrator->up(3);
+        $this->migrator->migrate(3);
         $this->migrator->up(1);
         $expect = array(
             'Migrating up from 0 to 3.',
@@ -117,7 +146,7 @@ class MigratorTest extends \PHPUnit_Framework_TestCase
 
     public function testDownWhenAlreadyPast()
     {
-        $this->migrator->up(1);
+        $this->migrator->migrate(1);
         $this->migrator->down(3);
         $expect = array (
             'Migrating up from 0 to 1.',
@@ -131,7 +160,7 @@ class MigratorTest extends \PHPUnit_Framework_TestCase
 
     public function testRollbackOnException()
     {
-        $this->migrator->up(4);
+        $this->migrator->migrate(4);
         $expect = array (
             'Migrating up from 0 to 4.',
             'Migrated up to 1.',

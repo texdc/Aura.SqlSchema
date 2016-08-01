@@ -8,8 +8,9 @@
  * @license http://opensource.org/licenses/bsd-license.php BSD
  *
  */
-namespace Aura\SqlSchema;
+namespace Aura\SqlSchema\Migration;
 
+use Aura\SqlSchema\Exception;
 use PDO;
 
 /**
@@ -80,8 +81,6 @@ class Migrator
      *
      * @param string $col A database column name.
      *
-     * @throws Exception When the PDO does not use ERRMODE_EXCEPTION.
-     *
      */
     public function __construct(
         PDO $pdo,
@@ -90,17 +89,28 @@ class Migrator
         $table = 'schema_migration',
         $col = 'version'
     ) {
-        $this->pdo = $pdo;
-
-        $errmode = $this->pdo->getAttribute(PDO::ATTR_ERRMODE);
-        if ($errmode != PDO::ERRMODE_EXCEPTION) {
-            throw new Exception('PDO must use ERRMODE_EXCEPTION for migrations.');
-        }
+        $this->setPdo($pdo);
 
         $this->migration_locator = $migration_locator;
         $this->output_callable = $output_callable;
         $this->table = $table;
         $this->col = $col;
+    }
+
+    public function migrate($to = null)
+    {
+        $from = $this->fetchVersion();
+        if ($to === null) {
+            $to = $this->migration_locator->count();
+        }
+        if ($from == $to) {
+            $message = "Already at version {$to}, skipping migration.";
+            $this->output($message);
+            return 1;
+        }
+
+        $direction = ($to > $from) ? 'up' : 'down';
+        return $this->applyMigrations($direction, $from, $to);
     }
 
     /**
@@ -197,7 +207,7 @@ class Migrator
         $migration = $this->migration_locator->get($version);
         if (! $migration instanceof MigrationInterface) {
             $message = get_class($migration) . ' does not implement '
-                     . '\\Aura\SqlSchema\\MigrationInterface.';
+                     . '\\Aura\\SqlSchema\\MigrationInterface.';
             throw new Exception($message);
         }
         return $migration;
@@ -244,5 +254,22 @@ class Migrator
     protected function rollBack()
     {
         $this->pdo->rollBack();
+    }
+
+    /**
+     *
+     * Sets the database connection.
+     *
+     * @param PDO $pdo A database connection.
+     *
+     * @throws Exception When the connection does not use ERRMODE_EXCEPTION.
+     *
+     */
+    protected function setPdo(PDO $pdo)
+    {
+        if (PDO::ERRMODE_EXCEPTION != $pdo->getAttribute(PDO::ATTR_ERRMODE)) {
+            throw new Exception('PDO must use ERRMODE_EXCEPTION for migrations.');
+        }
+        $this->pdo = $pdo;
     }
 }

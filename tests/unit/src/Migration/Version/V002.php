@@ -1,7 +1,7 @@
 <?php
-namespace Aura\SqlSchema\Migration;
+namespace Aura\SqlSchema\Migration\Version;
 
-use Aura\SqlSchema\AbstractMigration;
+use Aura\SqlSchema\Migration\AbstractMigration;
 
 class V002 extends AbstractMigration
 {

@@ -108,14 +108,14 @@ Each column description is a `Column` object with the following properties:
 
 ### Versions
 
-Migration versions should extend `Aura\SqlSchema\AbstractMigration` which expects a
-[PDO](http://php.net/PDO) instance as a constructor argument.
+Migration versions should extend `Aura\SqlSchema\Migration\AbstractMigration` which
+expects a [PDO](http://php.net/PDO) instance as a constructor argument.
 
 ```php
 <?php
 namespace My\Project\Migration;
 
-use Aura\SqlSchema\AbstractMigration;
+use Aura\SqlSchema\Migration\AbstractMigration;
 
 class V001 extends AbstractMigration
 {
@@ -144,9 +144,9 @@ $pdo->exec('INSERT INTO schema_migration (version) VALUES (0)');
 ### Running Migrations
 
 Migrations can be run with a simple script.  The [PDO](http://php.net/PDO) instance
-must be configured to use `PDO::ERRMODE_EXCEPTION`.  A `Aura\SqlSchema\Migrator`
-takes the `PDO` instance, an `Aura\SqlSchema\MigrationLocator` with a list of version
-factories, and an output `callable`.
+must be configured to use `PDO::ERRMODE_EXCEPTION`.  An `Aura\SqlSchema\Migration\Migrator`
+takes the `PDO` instance, an `Aura\SqlSchema\Migration\MigrationLocator` with a list
+of version factories, and an output `callable`.
 
 ```bash
 #!/usr/local/bin/php
@@ -156,8 +156,8 @@ namespace My\Project\Migration;
 
 require 'path/to/Aura.SqlSchema/autoload.php';
 
-use Aura\SqlSchema\Migrator;
-use Aura\SqlSchema\MigrationLocator;
+use Aura\SqlSchema\Migration\Migrator;
+use Aura\SqlSchema\Migration\MigrationLocator;
 use PDO;
 
 // a PDO connection

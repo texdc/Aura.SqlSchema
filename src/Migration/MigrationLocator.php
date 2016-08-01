@@ -8,7 +8,10 @@
  * @license http://opensource.org/licenses/bsd-license.php BSD
  *
  */
-namespace Aura\SqlSchema;
+namespace Aura\SqlSchema\Migration;
+
+use Aura\SqlSchema\Exception;
+use Countable;
 
 /**
  *
@@ -17,7 +20,7 @@ namespace Aura\SqlSchema;
  * @package Aura.SqlSchema
  *
  */
-class MigrationLocator
+class MigrationLocator implements Countable
 {
     /**
      *
@@ -74,5 +77,10 @@ class MigrationLocator
         }
 
         return $this->instances[$key];
+    }
+
+    public function count()
+    {
+        return count($this->factories);
     }
 }
