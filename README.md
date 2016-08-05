@@ -178,5 +178,5 @@ $output_callable = function ($message) {
 };
 
 $migrator = new Migrator($pdo, $migration_locator, $output_callable);
-print $migrator->up();
+print $migrator->migrate();
 ```

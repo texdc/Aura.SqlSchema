@@ -97,11 +97,21 @@ class Migrator
         $this->col = $col;
     }
 
+    /**
+     *
+     * Migrates to a specific, or latest, version.
+     *
+     * @param int|null $to The target version; uses the latest available migration
+     * when empty.
+     *
+     * @return int 0 on success, 1 on failure.
+     *
+     */
     public function migrate($to = null)
     {
         $from = $this->fetchVersion();
         if ($to === null) {
-            $to = $this->migration_locator->count();
+            $to = $this->migration_locator->latestVersion();
         }
         if ($from == $to) {
             $message = "Already at version {$to}, skipping migration.";
@@ -109,8 +119,7 @@ class Migrator
             return 1;
         }
 
-        $direction = ($to > $from) ? 'up' : 'down';
-        return $this->applyMigrations($direction, $from, $to);
+        return $this->applyMigrations($from, $to);
     }
 
     /**
@@ -120,7 +129,7 @@ class Migrator
      * @param int|null $to The target version number; increments the current version
      * by one when empty.
      *
-     * @return int 1 on success, 0 on failure.
+     * @return int 0 on success, 1 on failure.
      *
      */
     public function up($to = null)
@@ -132,7 +141,7 @@ class Migrator
             $this->output($message);
             return 1;
         }
-        return $this->applyMigrations('up', $from, $to);
+        return $this->applyMigrations($from, $to);
     }
 
     /**
@@ -142,7 +151,7 @@ class Migrator
      * @param int|null $to The target version number; decrements the current version
      * by one when empty.
      *
-     * @return int 1 on success, 0 on failure.
+     * @return int 0 on success, 1 on failure.
      *
      */
     public function down($to = null)
@@ -155,22 +164,23 @@ class Migrator
             $this->output($message);
             return 1;
         }
-        return $this->applyMigrations('down', $from, $to);
+        return $this->applyMigrations($from, $to);
     }
 
-    protected function applyMigrations($direction, $from, $to)
+    protected function applyMigrations($from, $to)
     {
-        $this->beginTransaction();
+        $direction = ($to > $from) ? 'up' : 'down';
+        $this->pdo->beginTransaction();
         $this->output("Migrating {$direction} from {$from} to {$to}.");
         $method = 'applyMigrations' . ucfirst($direction);
         try {
             $this->$method($from, $to);
             $this->updateVersion($to);
-            $this->commit();
+            $this->pdo->commit();
             $this->output("Migration {$direction} from {$from} to {$to} committed!");
             return 0;
         } catch (Exception $e) {
-            $this->rollBack();
+            $this->pdo->rollBack();
             $this->output("Migration {$direction} from {$from} to {$to} failed.");
             $this->output($e->getMessage());
             $this->output("Rolled back to version {$from}.");
@@ -239,21 +249,6 @@ class Migrator
         $stm = "UPDATE {$this->table} SET {$this->col} = {$version}";
         $sth = $this->pdo->prepare($stm);
         $sth->execute();
-    }
-
-    protected function beginTransaction()
-    {
-        $this->pdo->beginTransaction();
-    }
-
-    protected function commit()
-    {
-        $this->pdo->commit();
-    }
-
-    protected function rollBack()
-    {
-        $this->pdo->rollBack();
     }
 
     /**

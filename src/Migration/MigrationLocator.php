@@ -11,7 +11,6 @@
 namespace Aura\SqlSchema\Migration;
 
 use Aura\SqlSchema\Exception;
-use Countable;
 
 /**
  *
@@ -20,7 +19,7 @@ use Countable;
  * @package Aura.SqlSchema
  *
  */
-class MigrationLocator implements Countable
+class MigrationLocator
 {
     /**
      *
@@ -79,7 +78,7 @@ class MigrationLocator implements Countable
         return $this->instances[$key];
     }
 
-    public function count()
+    public function latestVersion()
     {
         return count($this->factories);
     }
