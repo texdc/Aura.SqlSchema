@@ -33,12 +33,12 @@ class Migrator
 
     /**
      *
-     * A MigrationLocator for loading migration versions.
+     * A LocatorInterface for loading migration versions.
      *
-     * @var MigrationLocator
+     * @var LocatorInterface
      *
      */
-    protected $migration_locator;
+    protected $locator;
 
     /**
      *
@@ -73,7 +73,7 @@ class Migrator
      *
      * @param PDO $pdo A database connection.
      *
-     * @param MigrationLocator $migration_locator A migration version locator.
+     * @param MigrationLocator $locator A migration version locator.
      *
      * @param callable $output_callable A message handling callable.
      *
@@ -84,14 +84,14 @@ class Migrator
      */
     public function __construct(
         PDO $pdo,
-        LocatorInterface $migration_locator,
+        LocatorInterface $locator,
         $output_callable,
         $table = 'schema_migration',
         $col = 'version'
     ) {
         $this->setPdo($pdo);
 
-        $this->migration_locator = $migration_locator;
+        $this->locator = $locator;
         $this->output_callable = $output_callable;
         $this->table = $table;
         $this->col = $col;
@@ -111,7 +111,7 @@ class Migrator
     {
         $from = $this->fetchVersion();
         if ($to === null) {
-            $to = $this->migration_locator->latestVersion();
+            $to = $this->locator->latestVersion();
         }
         if ($from == $to) {
             $message = "Already at version {$to}, skipping migration.";
@@ -214,7 +214,7 @@ class Migrator
 
     protected function getMigration($version)
     {
-        $migration = $this->migration_locator->get($version);
+        $migration = $this->locator->get($version);
         if (! $migration instanceof MigrationInterface) {
             $message = get_class($migration) . ' does not implement '
                      . '\\Aura\\SqlSchema\\MigrationInterface.';
