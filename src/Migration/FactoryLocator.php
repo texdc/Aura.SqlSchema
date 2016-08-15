@@ -19,7 +19,7 @@ use Aura\SqlSchema\Exception;
  * @package Aura.SqlSchema
  *
  */
-class MigrationLocator
+class FactoryLocator implements LocatorInterface
 {
     /**
      *
@@ -78,6 +78,13 @@ class MigrationLocator
         return $this->instances[$key];
     }
 
+    /**
+     *
+     * Returns the most recent version number.
+     *
+     * @return int
+     *
+     */
     public function latestVersion()
     {
         return count($this->factories);

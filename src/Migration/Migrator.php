@@ -84,7 +84,7 @@ class Migrator
      */
     public function __construct(
         PDO $pdo,
-        MigrationLocator $migration_locator,
+        LocatorInterface $migration_locator,
         $output_callable,
         $table = 'schema_migration',
         $col = 'version'

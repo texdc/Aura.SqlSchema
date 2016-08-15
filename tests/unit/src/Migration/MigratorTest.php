@@ -25,7 +25,7 @@ class MigratorTest extends \PHPUnit_Framework_TestCase
             function () use ($pdo) { return new Version\V003($pdo); },
         );
 
-        $migration_locator = new MigrationLocator($factories);
+        $migration_locator = new FactoryLocator($factories);
         $output_callable = array($this, 'captureOutput');
 
         $this->migrator = new Migrator($pdo, $migration_locator, $output_callable);
@@ -121,7 +121,7 @@ class MigratorTest extends \PHPUnit_Framework_TestCase
     public function testPdoErrmode()
     {
         $pdo = new PDO('sqlite::memory:');
-        $migration_locator = new MigrationLocator();
+        $migration_locator = new FactoryLocator();
         $output_callable = array($this, 'captureOutput');
 
         $this->expectException('Exception', "PDO must use ERRMODE_EXCEPTION for migrations.");
