@@ -33,13 +33,13 @@ class GlobLocatorTest extends \PHPUnit_Framework_TestCase
 
     public function testConstructorValidatesDirectory()
     {
-        $this->expectException('Aura\SqlSchema\Exception');
+        $this->setExpectedException('Aura\SqlSchema\Exception');
         $locator = new GlobLocator(static::$pdo, 'foo', 'bar');
     }
 
     public function testGetValidatesVersion()
     {
-        $this->expectException('Aura\SqlSchema\Exception');
+        $this->setExpectedException('Aura\SqlSchema\Exception');
         $this->locator->get(5);
     }
 

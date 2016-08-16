@@ -124,7 +124,7 @@ class MigratorTest extends \PHPUnit_Framework_TestCase
         $migration_locator = new FactoryLocator();
         $output_callable = array($this, 'captureOutput');
 
-        $this->expectException('Exception', "PDO must use ERRMODE_EXCEPTION for migrations.");
+        $this->setExpectedException('Exception', "PDO must use ERRMODE_EXCEPTION for migrations.");
         $this->migrator = new Migrator($pdo, $migration_locator, $output_callable);
     }
 
